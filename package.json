@@ -35,7 +35,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "mcp-use": "latest",
+    "mcp-use": "^1.12.1",
     "node-mocks-http": "^1.17.2",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
