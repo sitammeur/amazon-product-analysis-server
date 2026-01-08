@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { getProxiedImageUrl } from "../utils";
 
 interface ImageGalleryProps {
     images: string[];
     title: string;
+    mcpUrl?: string;
 }
 
 const ChevronLeftIcon: React.FC = () => (
@@ -25,18 +27,23 @@ const ImageIcon: React.FC = () => (
     </svg>
 );
 
-export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, title }) => {
+export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, title, mcpUrl }) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [isZoomed, setIsZoomed] = useState(false);
 
-    if (!images || images.length === 0) return null;
+    // Proxy all images to avoid CORS issues
+    const proxiedImages = useMemo(() => {
+        return images?.map((img) => getProxiedImageUrl(img, mcpUrl) || img) || [];
+    }, [images, mcpUrl]);
+
+    if (!proxiedImages || proxiedImages.length === 0) return null;
 
     const handlePrevious = () => {
-        setSelectedIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+        setSelectedIndex((prev) => (prev === 0 ? proxiedImages.length - 1 : prev - 1));
     };
 
     const handleNext = () => {
-        setSelectedIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+        setSelectedIndex((prev) => (prev === proxiedImages.length - 1 ? 0 : prev + 1));
     };
 
     const handleThumbnailClick = (index: number) => {
@@ -49,7 +56,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, title }) => 
                 <ImageIcon />
                 Product Gallery
                 <span className="text-xs font-normal text-secondary ml-auto">
-                    {selectedIndex + 1} / {images.length}
+                    {selectedIndex + 1} / {proxiedImages.length}
                 </span>
             </h4>
 
@@ -61,7 +68,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, title }) => 
                     onClick={() => setIsZoomed(!isZoomed)}
                 >
                     <img
-                        src={images[selectedIndex]}
+                        src={proxiedImages[selectedIndex]}
                         alt={`${title} - Image ${selectedIndex + 1}`}
                         className={`w-full object-contain transition-transform duration-300 ${isZoomed ? "h-96 scale-150" : "h-64"
                             }`}
@@ -72,7 +79,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, title }) => 
                 </div>
 
                 {/* Navigation Arrows */}
-                {images.length > 1 && (
+                {proxiedImages.length > 1 && (
                     <>
                         <button
                             onClick={(e) => { e.stopPropagation(); handlePrevious(); }}
@@ -98,9 +105,9 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, title }) => 
             </div>
 
             {/* Thumbnails */}
-            {images.length > 1 && (
+            {proxiedImages.length > 1 && (
                 <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
-                    {images.map((image, index) => (
+                    {proxiedImages.map((image, index) => (
                         <button
                             key={index}
                             onClick={() => handleThumbnailClick(index)}

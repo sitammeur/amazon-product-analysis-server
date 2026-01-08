@@ -1,4 +1,5 @@
 import React from "react";
+import { getProxiedImageUrl } from "../utils";
 
 interface ProductCardProps {
     title?: string;
@@ -7,6 +8,7 @@ interface ProductCardProps {
     currency?: string;
     rating?: number;
     totalReviews?: number;
+    mcpUrl?: string;
 }
 
 const StarIcon: React.FC<{ filled: boolean; half?: boolean }> = ({ filled, half }) => (
@@ -85,6 +87,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     currency,
     rating,
     totalReviews,
+    mcpUrl,
 }) => {
     // If we have absolutely no data, don't render anything
     if (!title && !imageUrl && price === undefined && rating === undefined) {
@@ -94,14 +97,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     const hasPrice = price !== undefined && price !== null && currency;
     const hasRating = rating !== undefined && rating !== null;
     const hasReviews = totalReviews !== undefined && totalReviews !== null;
+    
+    // Use proxied URL for Amazon images to avoid CORS issues
+    const proxiedImageUrl = getProxiedImageUrl(imageUrl, mcpUrl);
 
     return (
         <div className="flex gap-6 p-6 bg-surface border border-default rounded-2xl">
             {/* Product Image - only show if we have an image URL */}
-            {imageUrl && (
+            {proxiedImageUrl && (
                 <div className="relative shrink-0 w-32 h-32 rounded-xl overflow-hidden bg-white">
                     <img
-                        src={imageUrl}
+                        src={proxiedImageUrl}
                         alt={title || "Product image"}
                         className="w-full h-full object-contain p-2"
                         onError={(e) => {

@@ -25,6 +25,60 @@ const server = new MCPServer({
  * Add here your standard MCP tools, resources and prompts
  */
 
+// Image proxy endpoint to bypass CORS restrictions for Amazon images
+server.get("/api/image-proxy", async (c) => {
+  const imageUrl = c.req.query("url");
+
+  if (!imageUrl) {
+    return c.json({ error: "URL parameter is required" }, 400);
+  }
+
+  try {
+    // Validate that the URL is from Amazon's CDN
+    const url = new URL(imageUrl);
+    const allowedHosts = [
+      "m.media-amazon.com",
+      "images-na.ssl-images-amazon.com",
+      "images-eu.ssl-images-amazon.com",
+      "images-fe.ssl-images-amazon.com",
+      "ecx.images-amazon.com",
+    ];
+
+    if (!allowedHosts.some((host) => url.hostname.includes(host) || url.hostname.endsWith(".media-amazon.com"))) {
+      return c.json({ error: "Only Amazon image URLs are allowed" }, 403);
+    }
+
+    // Fetch the image from Amazon
+    const response = await fetch(imageUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "image/webp,image/apng,image/*,*/*;q=0.8",
+        "Referer": "https://www.amazon.com/",
+      },
+    });
+
+    if (!response.ok) {
+      return c.json({ error: "Failed to fetch image" }, 502);
+    }
+
+    // Get the content type and body
+    const contentType = response.headers.get("content-type") || "image/jpeg";
+    const imageBuffer = await response.arrayBuffer();
+
+    // Return the image with appropriate headers
+    return new Response(imageBuffer, {
+      headers: {
+        "Content-Type": contentType,
+        "Cache-Control": "public, max-age=86400", // Cache for 24 hours
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  } catch (error) {
+    console.error("Error proxying image:", error);
+    return c.json({ error: `Failed to proxy image: ${String(error)}` }, 500);
+  }
+});
+
 // API endpoint for Amazon product analysis
 server.get("/api/analyze-amazon-product", async (c) => {
   const url = c.req.query("url");

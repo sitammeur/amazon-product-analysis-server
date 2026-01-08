@@ -97,6 +97,7 @@ const AmazonProductAnalysisContent: React.FC = () => {
                                         currency={analysis.product.currency}
                                         rating={analysis.product.rating}
                                         totalReviews={analysis.product.totalReviews}
+                                        mcpUrl={mcp_url}
                                     />
                                 )}
 
@@ -105,6 +106,7 @@ const AmazonProductAnalysisContent: React.FC = () => {
                                     <ImageGallery
                                         images={analysis.images}
                                         title={analysis.product?.title || "Product"}
+                                        mcpUrl={mcp_url}
                                     />
                                 )}
 
